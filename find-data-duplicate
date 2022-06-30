@@ -1,0 +1,5 @@
+select SalesOrderId,
+ProductIdReceived, ProductCodeReturned from [dbo].[SalesOrderDifferences]
+group by SalesOrderId,
+ProductIdReceived, ProductCodeReturned
+having count (*) > 1
