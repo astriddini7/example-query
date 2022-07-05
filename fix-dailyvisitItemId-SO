@@ -1,0 +1,94 @@
+--select * from SalesOrders where OrderedBy = 1 and DailyVisitItemId is null
+--select * from SalesOrders where Id = 'e4676a69-6d3e-4ac3-ae66-6f9019f57c71'
+--select * from DailyVisits where Id = '9958ef8d8f6f4f01bdc571c41ed39f7a'
+--select * from DailyVisitItems where Id = 'eaf8705a-1572-4cee-bd2b-cf84efd91cd5'
+
+IF OBJECT_ID('tempdb..#Temp_Customers') IS NOT NULL DROP TABLE #Temp_Customers
+IF OBJECT_ID('tempdb..#Temp_SalesOrders') IS NOT NULL DROP TABLE #Temp_SalesOrders
+IF OBJECT_ID('tempdb..#Temp_SalesOrderItems') IS NOT NULL DROP TABLE #Temp_SalesOrderItems
+SET NOCOUNT ON
+
+DECLARE @SalesOrderId varchar(128)
+DECLARE @SalesOrderNo varchar(128)
+DECLARE @SalesOrderDate datetime
+DECLARE @SalesOrderEmployeeId varchar(128)
+DECLARE @SalesOrderEmployeeName varchar(128)
+DECLARE @SalesOrderCustomerId varchar(128)
+DECLARE @SalesOrderCustomerName varchar(128)
+
+DECLARE @VisitId varchar(128)
+DECLARE @VisitItemId varchar(128)
+
+DECLARE @CustomerDetails varchar(max)
+
+SELECT *
+INTO #Temp_SalesOrders
+FROM SalesOrders
+WHERE OrderedBy = 1 and DailyVisitItemId is null
+--and Id = 'e4676a69-6d3e-4ac3-ae66-6f9019f57c71'
+
+WHILE(SELECT count(*) FROM #Temp_SalesOrders) > 0
+BEGIN
+	PRINT ''
+    SELECT TOP 1 @SalesOrderId = Id FROM #Temp_SalesOrders ORDER BY Date
+    SELECT TOP 1 @SalesOrderNo = OrderNo FROM #Temp_SalesOrders WHERE Id = @SalesOrderId
+    SELECT TOP 1 @SalesOrderDate = Date FROM #Temp_SalesOrders WHERE Id = @SalesOrderId
+    SELECT TOP 1 @SalesOrderCustomerId = CustomerId FROM #Temp_SalesOrders WHERE Id = @SalesOrderId
+    SELECT TOP 1 @SalesOrderCustomerName = CustomerName FROM #Temp_SalesOrders WHERE Id = @SalesOrderId
+    SELECT TOP 1 @SalesOrderEmployeeId = EmployeeId FROM #Temp_SalesOrders WHERE Id = @SalesOrderId
+    SELECT TOP 1 @SalesOrderEmployeeName = EmployeeName FROM #Temp_SalesOrders WHERE Id = @SalesOrderId
+
+	--SELECT *
+	--INTO #Temp_SalesOrderItems
+	--FROM SalesOrderItems WHERE SalesOrderId = @SalesOrderId
+	--ORDER BY ProductCode, Price
+	SELECT TOP 1 @VisitItemId = null
+	SELECT TOP 1 @VisitItemId = DVI.Id from DailyVisits DV
+	join DailyVisitItems DVI on DV.Id = DVI.EmployeeDailyScheduleId
+	where CONVERT(varchar,DV.Date,23) = CONVERT(varchar,@SalesOrderDate,23)
+		and DVI.CustomerId = @SalesOrderCustomerId and DV.EmployeeId = @SalesOrderEmployeeId
+		order by ABS(DATEDIFF(second, DVI.CheckInTime, @SalesOrderDate))
+
+	SELECT TOP 1 @VisitId = EmployeeDailyScheduleId from DailyVisitItems where Id = @VisitItemId
+	IF(@VisitItemId is null or @VisitItemId = '')
+	BEGIN
+		--PRINT 'No Visit Found'
+		PRINT 'OrderNo: ' + @SalesOrderNo + ' | ' + @SalesOrderId
+		PRINT 'Date: ' + CONVERT(varchar, @SalesOrderDate, 23) + ' ' + CONVERT(VARCHAR(8), @SalesOrderDate, 108)
+		PRINT 'Employee: ' + @SalesOrderEmployeeName + ' | ' + @SalesOrderEmployeeId
+		PRINT 'Customer: ' + @SalesOrderCustomerName + ' | ' + @SalesOrderCustomerId
+
+		CREATE TABLE #Temp_Customers ( Detail varchar(max), Checkin DateTimeOffSet )
+		INSERT INTO #Temp_Customers (Detail, Checkin)
+		SELECT CONVERT(VARCHAR(8), DVI.CheckInTime, 108) + ' : ' + C.Name, DVI.CheckInTime
+		FROM DailyVisits DV
+			join DailyVisitItems DVI on DV.Id = DVI.EmployeeDailyScheduleId
+			join Customers C on DVI.CustomerId = C.Id
+			where CONVERT(varchar,DV.Date,23) = CONVERT(varchar,@SalesOrderDate,23) and DV.EmployeeId = @SalesOrderEmployeeId
+		PRINT 'Visit Customer: ' + CONVERT(varchar,@SalesOrderDate,23)
+		SELECT @CustomerDetails =  STRING_AGG(Detail, CHAR(13)+CHAR(10)) WITHIN GROUP (ORDER BY Checkin) FROM #Temp_Customers
+		PRINT @CustomerDetails
+		DROP TABLE #Temp_Customers
+	END
+	ELSE
+	BEGIN
+		PRINT @SalesOrderId + ' - ' + @VisitId + ' - ' + @VisitItemId
+		Update SalesOrders set
+			DailyVisitItemId = @VisitItemId, UpdatedAt = GETDATE()
+		Where Id = @SalesOrderId
+	END
+
+	PRINT ''
+    DELETE #Temp_SalesOrders
+    WHERE Id = @SalesOrderId
+END
+DROP TABLE #Temp_SalesOrders
+
+--select SO.Id, SO.Date, SO.CustomerName, C.Name, SO.CustomerId as order_Customer, DVI.CustomerId as visit_Customer, SO.Latitude, C.Latitude, ABS(SO.Latitude - C.Latitude) as diff from SalesOrders SO
+--join DailyVisitItems DVI on SO.DailyVisitItemId = DVI.Id
+--join Customers C on C.Id = DVI.CustomerId
+--where OrderedBy = 1 and DVI.CustomerId <> SO.CustomerId and LOWER(SO.CustomerName) not like LOWER('%'+C.Name+'%')
+--order by DVI.CheckInTime
+
+select OrderNo, CONVERT(varchar,Date,23), CustomerId, CustomerName, EmployeeId, EmployeeName from SalesOrders
+where OrderedBy = 1 and DailyVisitItemId is null order by Date
