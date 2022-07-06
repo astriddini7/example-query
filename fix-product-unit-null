@@ -1,0 +1,65 @@
+--Find Data
+select ProductId, STRING_AGG(Convertion, '_') as Convertions
+from ProductUnits
+group by ProductId
+having STRING_AGG(Convertion, '_') not like '%1.00%'
+
+
+--==================================================
+--Fix data
+IF OBJECT_ID('tempdb..#Temp_Product') IS NOT NULL DROP TABLE #Temp_Product
+
+select ProductId, STRING_AGG(Convertion, '_') as Convertions
+INTO #Temp_Product
+from ProductUnits
+group by ProductId
+having STRING_AGG(Convertion, '_') not like '%1.00%'
+
+DECLARE @ProductId varchar(128)
+DECLARE @UnitId int
+DECLARE @UnitName varchar(128)
+WHILE(SELECT count(*) FROM #Temp_Product) > 0
+BEGIN
+	SELECT TOP 1 @ProductId = ProductId from #Temp_Product
+	SELECT @UnitId = UnitId from Products where Id = @ProductId
+	SELECT @UnitName = Name from Units where UnitId = @UnitId
+
+	INSERT INTO [dbo].[ProductUnits]
+			   ([Id]
+			   ,[ProductId]
+			   ,[UnitId]
+			   ,[UnitName]
+			   ,[Convertion]
+			   ,[CreatedTime]
+			   ,[ModifiedTime]
+			   ,[ModifiedBy]
+			   ,[CreatedAt]
+			   ,[UpdatedAt]
+			   ,[Deleted])
+		 VALUES
+			   (NEWID()
+			   ,@ProductId
+			   ,@UnitId
+			   ,@UnitName
+			   ,1
+			   ,GETDATE()
+			   ,GETDATE()
+			   ,'System'
+			   ,GETDATE()
+			   ,GETDATE()
+			   ,0)
+
+	DELETE #Temp_Product
+	WHERE ProductId = @ProductId
+END
+
+IF OBJECT_ID('tempdb..#Temp_Product') IS NOT NULL DROP TABLE #Temp_Product
+
+--select * from ProductUnits
+--where ModifiedBy = 'System'
+--order by UpdatedAt desc
+
+
+--select * from ProductUnits
+--where ProductId = '5703421b-3e8a-4e73-b4e7-c50d56525191'
+--order by Convertion
