@@ -1,17 +1,18 @@
 UPDATE c
-SET
-c.CustomerOverDue = t.Overdue,
-c.CustomerInvoiceCount = t.InvoiceCount,
-c.CustomerDebt = t.SisaBayar,
-c.CustomerReturn = t.SisaBayarReturn
+SET 
+    c.CustomerOverDue = t.Overdue,
+        c.CustomerInvoiceCount = t.InvoiceCount,
+        c.CustomerDebt = t.SisaBayar,
+        c.CustomerReturn = t.SisaBayarReturn,
+        c.UpdatedAt = GETDATE()
 FROM Customers AS c
 INNER JOIN
-(
-SELECT CustomerId, COALESCE(count(CASE WHEN SalesType = 0 THEN SisaBayar END),0) InvoiceCount,
-COALESCE(SUM(CASE WHEN SalesType = 0 THEN SisaBayar END),0) as Overdue,
-COALESCE(SUM(CASE WHEN SalesType = 0 THEN SisaBayar END),0) As SisaBayar,
-COALESCE(SUM(CASE WHEN SalesType = 1 THEN SisaBayar END),0) AS SisaBayarReturn
-FROM AccountReceivableOverdue GROUP BY CustomerId
-) t
-ON t.CustomerId = c.ID
-WHERE c.Deleted=0 and id='2c818e02–0108–4915-a887–0ab59fa1fcab'
+    (
+        SELECT CustomerId, COALESCE(count(CASE WHEN SalesType = 0 and Status = 1 THEN SisaBayar END),0) InvoiceCount, 
+        COALESCE(SUM(CASE WHEN SalesType = 0 THEN Overdue END),0) as Overdue,
+        COALESCE(SUM(CASE WHEN SalesType = 0 THEN SisaBayar END),0) As SisaBayar,
+        COALESCE(SUM(CASE WHEN SalesType = 1 THEN SisaBayar END),0) AS SisaBayarReturn
+        FROM AccountReceivableOverdue  GROUP BY CustomerId 
+    ) t
+    ON t.CustomerId = c.ID
+WHERE c.Deleted=0
