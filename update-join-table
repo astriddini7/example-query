@@ -1,0 +1,2 @@
+update DailyVisits set Name = a.Name, ModifiedTime=GETDATE(), ModifiedBy='Astrid_Simplidots'
+from Employees a join DailyVisits b on b.EmployeeId = a.Id
