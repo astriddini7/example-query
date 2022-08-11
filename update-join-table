@@ -1,2 +1,12 @@
 update DailyVisits set Name = a.Name, ModifiedTime=GETDATE(), ModifiedBy='Astrid_Simplidots'
 from Employees a join DailyVisits b on b.EmployeeId = a.Id
+
+  update StockTransactionItems set Price = a.PriceAverage, SubTotal = Price * TotalQuantity, ModifiedTime=GETDATE(), ModifiedBy='Astrid_Simplidots'
+from Products a join StockTransactionItems b on b.ProductId = a.Id
+where StockTransactionId in (
+select StockTransactionId from StockTransactions where StockTransactionNo in (
+ 'OUT-211200001',
+ 'IN-220800007', 
+ 'IN-220800008', 
+ 'IN-220800009')
+ )
