@@ -1,0 +1,5 @@
+SELECT TransactionNo, Count(*) as Count, Min(TransactionType) as Type, Min(Date) as Date, SUM(Debit) as 'Debit', SUM(Credit) as 'Credit', SUM(Debit)-SUM(Credit) as Unbalance
+FROM JurnalEntries
+WHERE Deleted = 0
+GROUP BY TransactionNo
+HAVING SUM(Debit)-SUM(Credit) <> 0
