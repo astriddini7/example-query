@@ -1,0 +1,8 @@
+SELECT *
+             FROM Customers AS c 
+             cross apply 
+                 (SELECT TOP 2 *, (SELECT * FROM StockCustomerItems WHERE StockCustomerId = StockCustomers.Id FOR JSON PATH) AS ListStockCustomerItemJSON
+                  FROM StockCustomers
+                  WHERE CustomerId = c.Id
+                  ORDER BY Date DESC) AS sc
+              WHERE sc.ListStockCustomerItemJSON is not null and sc.UpdatedAt >= '2022-08-11T22:02:52.5630000+00:00' ORDER BY sc.[UpdatedAt] ASC OFFSET 0 ROWS FETCH NEXT 200 ROWS ONLY
