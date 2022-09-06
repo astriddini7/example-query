@@ -198,3 +198,6 @@ drop table #Temp_Purchases
 --select ProductCode, CostPrice from SalesOrderItems
 --where ProductCode = 'HS003'
 --group by ProductCode, CostPrice
+
+
+SELECT @Price = SUM(Price*TotalQuantity)/SUM(TotalQuantity) from #Items where ProductId = @ProductId
