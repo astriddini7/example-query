@@ -1,0 +1,16 @@
+select a.TransactionNo, sum(a.Credit), sum(a.Debit), max(DE.SubTotal), sum(a.Credit)-max(DE.SubTotal+DG.DiscountAmountItem) from JurnalEntries a
+left join SalesInvoices DE on DE.InvoiceNo = a.TransactionNo
+INNER JOIN (
+SELECT EDH.SalesInvoiceId, sum(EDH.DiscountAmount) as DiscountAmountItem
+      FROM SalesInvoiceItems EDH
+      JOIN SalesInvoices D
+            ON d.Id = EDH.SalesInvoiceId
+      Where D.Deleted =0 and D.Status <> 3
+      GROUP BY EDH.SalesInvoiceId) DG
+ON DE.Id = DG.SalesInvoiceId
+left join Accounts c on c.Id = a.AccountId
+left join AccountCategories d on d.Id = c.AccountCategoryId
+where a.TransactionType = 0 
+and d.Name = 'Pendapatan'  and a.Deleted = 0
+group by d.Name, a.TransactionNo
+having sum(a.Credit)-max(DE.SubTotal+DG.DiscountAmountItem) <> 0
