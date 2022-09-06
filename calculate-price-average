@@ -1,0 +1,200 @@
+SELECT *
+INTO #Temp_Purchases 
+FROM dbo.PurchaseInvoices
+WHERE Status <> 2
+ORDER BY CreatedTime
+
+declare @mytrack varchar(128)
+declare @LatestPrice decimal(10,2)
+declare @PriceAverage decimal(10,2)
+declare @SumLinetTotal decimal(10,2)
+declare @SumQuantity decimal(10,2)
+declare @TotalStock decimal(10,2)
+declare @TotalQty decimal(10,2)
+declare @TotalStockIn decimal(10,2)
+declare @TotalStockOut decimal(10,2)
+declare @LineTotal decimal(10,2)
+declare @LineTotalAverage decimal(10,2)
+
+declare @Price decimal(10,2)
+declare @PriceDiscount decimal(10,2)
+declare @ProductId varchar(128)
+declare @PurchaseItemId int
+declare @PurchaseItemCreatedTime Date
+declare @TotalQuantity decimal(10,2)
+declare @DiscountAmount decimal(10,2)
+
+declare @PurchaseId int
+declare @PurchaseFrom int
+declare @Date DateTime
+declare @NextDate DateTime
+declare @WarehouseId varchar(128)
+declare @DocumentNo varchar(128)
+declare @DiscountPercentage decimal(10,2)
+
+update Products set PriceAverage = CostPrice, LatestPrice = CostPrice
+
+WHILE (SELECT count(*) FROM #Temp_Purchases) > 0
+BEGIN
+    SELECT top 1 @PurchaseId = PurchaseInvoiceId FROM #Temp_Purchases ORDER BY CreatedTime
+    SELECT top 1 @PurchaseFrom = GenerateFrom FROM #Temp_Purchases ORDER BY CreatedTime
+    SELECT top 1 @DocumentNo = DocumentNo FROM #Temp_Purchases ORDER BY CreatedTime
+    SELECT top 1 @WarehouseId = WarehouseId FROM #Temp_Purchases ORDER BY CreatedTime
+    SELECT top 1 @Date = Date FROM #Temp_Purchases ORDER BY CreatedTime
+        --PurchaseInvoice = 0,
+        --PurchaseOrder = 1,
+        --PurchaseDelivery = 2,
+
+        
+    create table #Items
+    (
+        ItemId int,
+        ProductId varchar(128),
+        Price decimal(10,2),
+        TotalQuantity decimal(10,2),
+        DiscountAmount decimal(10,2),
+        LineTotal decimal(10,2),
+        CreatedTime Date
+    )
+
+    IF @PurchaseFrom < 2
+    BEGIN
+        INSERT INTO #Items (ItemId, ProductId, Price, TotalQuantity, DiscountAmount, CreatedTime, LineTotal)
+        SELECT PurchaseInvoiceItemId, ProductId, Price, TotalQuantity, DiscountAmount, CreatedTime, LineTotal FROM dbo.PurchaseInvoiceItems
+        WHERE PurchaseInvoiceId = @PurchaseId
+        --and ProductId = '056c769c-d8ad-49ed-854b-9e4c4ed47d26'
+    END
+    ELSE
+    BEGIN
+        INSERT INTO #Items (ItemId, ProductId, Price, TotalQuantity, DiscountAmount, CreatedTime, LineTotal)
+        SELECT PurchaseOrderItemId, ProductId, Price, TotalQuantity, DiscountAmount, CreatedTime, LineTotal FROM dbo.PurchaseOrderItems
+        WHERE PurchaseOrderId in (select PurchaseOrderId from PurchaseDeliveries where PurchaseDeliveryNo = @DocumentNo and Deleted = 0 and Status <> 3)
+        --and ProductId = '056c769c-d8ad-49ed-854b-9e4c4ed47d26'
+        SELECT @Date = Date from PurchaseDeliveries where PurchaseDeliveryNo = @DocumentNo and Deleted = 0 and Status <> 3
+    END
+
+    WHILE (SELECT count(*) FROM #Items) > 0
+    BEGIN
+        SELECT top 1 @PurchaseItemId = ItemId FROM #Items ORDER BY ProductId
+        SELECT top 1 @ProductId = ProductId FROM #Items ORDER BY ProductId
+        SELECT top 1 @PurchaseItemCreatedTime = CreatedTime FROM #Items ORDER BY ProductId
+        SELECT TOP 1 @DiscountPercentage = SUM(DiscountAmount)/(SUM(TotalQuantity * Price)) FROM #Items where ProductId = @ProductId
+
+        SELECT @PriceAverage = PriceAverage from Products where Id = @ProductId
+        SELECT @Price = ABS(Avg(Price)) from #Items where ProductId = @ProductId
+        SELECT @PriceDiscount = SUM(LineTotal)/SUM(TotalQuantity) from #Items where ProductId = @ProductId
+
+        print 'average sebelumnya = ' +Convert(varchar, @PriceAverage)
+        print 'Price Discount = ' +Convert(varchar,@PriceDiscount)
+        print 'Date = ' +Format(@Date, 'yyyy-MM-dd hh:mm:ss')
+        print 'NextDate = ' +Format(@NextDate, 'yyyy-MM-dd hh:mm:ss')
+        print 'Discount = ' +  +Convert(varchar,@DiscountPercentage)
+        print 'Quantity = ' +  +Convert(varchar,@TotalQty)
+        print 'TotalStock = ' +  +Convert(varchar,@TotalStock)
+        print 'LineTotal = ' +  +Convert(varchar,@LineTotal)
+
+        IF @PriceAverage <> @PriceDiscount 
+        BEGIN
+            -- Calculate Price Average
+            SELECT @TotalStockIn = Sum(Quantity) from StockMovements where WarehouseId = @WarehouseId and MovementType = 0 and ProductId = @ProductId and Date < @Date
+            IF @TotalStockIn is null
+            BEGIN
+                SELECT @TotalStockIn = 0
+            END
+            SELECT @TotalStockOut = Sum(Quantity) from StockMovements where WarehouseId = @WarehouseId and MovementType = 1 and ProductId = @ProductId and Date < @Date
+            IF @TotalStockOut is null
+            BEGIN
+                SELECT @TotalStockOut = 0
+            END
+            print 'stock in'
+            print @TotalStockIn
+            print 'stock out'
+            print @TotalStockOut
+            SELECT @TotalStock = @TotalStockIn - @TotalStockOut
+            SELECT @TotalQty = ABS(Sum(TotalQuantity)) from #Items where ProductId = @ProductId
+            SELECT @DiscountAmount = ABS(Sum(DiscountAmount)) from #Items where ProductId = @ProductId
+            SELECT @LineTotal = ((@Price * @TotalQty) - @DiscountAmount)
+            SELECT @LineTotalAverage = @PriceAverage * @TotalStock
+            SELECT @SumLinetTotal = @LineTotal + @LineTotalAverage
+            SELECT @SumQuantity = @TotalStock + @TotalQty
+            SELECT @PriceAverage = @SumLinetTotal / @SumQuantity
+        
+            -- Update product PriceAverage, PriceAverage
+            print 'from date'
+            print Format(@Date, 'yyyy-MM-dd hh:mm:ss')
+            print 'stock'
+            print @TotalStock
+            print 'totalqty'
+            print @TotalQty
+
+            print '@LineTotal'
+            print @LineTotal
+
+            print 'average setelahnya'
+            print @PriceAverage
+            print 'dari price'
+            print @Price
+
+--            update Products
+--                set LatestPrice = @Price, PriceAverage = @PriceAverage, UpdatedAt = GETDATE()
+--                where Id = @ProductId
+--
+--            update SalesOrderItems set
+--                CostPrice = @PriceAverage where CreatedAt > @Date and CreatedAt < '3000-01-01' and ProductId = @ProductId
+        END
+        
+
+        DELETE #Items
+        WHERE ProductId = @ProductId
+    END
+    print @PurchaseId
+    
+    drop table #Items
+    
+    DELETE #Temp_Purchases
+    WHERE PurchaseInvoiceId = @PurchaseId
+
+END
+
+drop table #Temp_Purchases
+
+
+--drop table #Items
+--drop table #Temp_Purchases
+
+--select top 100 * from SalesOrderItems
+
+
+--select POI.ProductId, P.Name, P.PriceAverage, P.CostPrice, P.LatestPrice, POI.Price, POI.TotalQuantity, POI.DiscountAmount, POI.DiscountPercentage
+--from PurchaseOrderItems POI 
+--join Products P on POI.ProductId = P.Id
+--join PurchaseOrders PO on POI.PurchaseOrderId = PO.PurchaseOrderId
+--join PurchaseDeliveries PD on PD.PurchaseOrderId = PO.PurchaseOrderId
+--join PurchaseInvoices PI on PI.DocumentNo = PD.PurchaseDeliveryNo
+--Where PD.Status <> 3 and PI.Status <> 2 and PD.Deleted = 0
+--and P.ProductCode = 'GBH0038'
+--order by P.Id, POI.CreatedTime
+
+--select * from [PurchaseInvoices] where PurchaseInvoiceId = 5
+--select * from PurchaseDeliveries where Deleted = 1
+--select * from PurchaseOrders 
+
+--select * from PurchaseOrders
+--select * from PurchaseDeliveries where PurchaseDeliveryId in (3,5,15)
+--select * from PurchaseInvoices
+
+--Update SalesInvoiceItems
+--set CostPrice = a.CostPrice
+--from SalesOrderItems a
+--left join SalesInvoiceItems b on b.OrderItemId = a.Id and b.ProductId = a.ProductId
+
+--select Id,  CostPrice, PriceAverage, LatestPrice from Products
+--where ProductCode = 'HS003'
+
+--update Products
+--set PriceAverage = 717.75, LatestPrice = 717.75
+--where  ProductCode = 'HS003'
+
+--select ProductCode, CostPrice from SalesOrderItems
+--where ProductCode = 'HS003'
+--group by ProductCode, CostPrice
