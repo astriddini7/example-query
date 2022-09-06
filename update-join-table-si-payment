@@ -1,0 +1,7 @@
+update salesinvoices set Deleted=1 where ReferenceNo !='-'
+and ReferenceNo !='' and ReferenceNo is not null and Deleted=0 and ModifiedTime > '2021-04-07' and ModifiedTime < '2021-04-09'
+and Id not in (select SalesInvoiceId from PaymentReceivedItems a
+join PaymentReceiveds b on b.Id = a.PaymentReceivedId where SalesInvoiceId in (
+select Id from salesinvoices where ReferenceNo !='-'
+and ReferenceNo !='' and ReferenceNo is not null and Deleted=0 and ModifiedTime > '2021-04-07' and ModifiedTime < '2021-04-09')
+and Status = 3)
