@@ -1,0 +1,8 @@
+select Date, Count(*) as UserActiveCount, STRING_AGG(UserName, ',') as Users  from (
+	select CONVERT(DATE, Date) as Date, UserName from UserActivities
+	where Date >= '2022-10-01'
+	and (UserName not in ('satou') and UserName not like '%_simplidots')
+	group by CONVERT(DATE, Date), UserName
+) t
+group by Date
+order by CONVERT(DATE, Date)
