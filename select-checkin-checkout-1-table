@@ -1,0 +1,117 @@
+declare @emp table(
+	NRP varchar(10),
+	Nama varchar(100),
+	Dept varchar(5),
+	post varchar(1)
+)
+
+insert into @emp values('A11111', 'Ujang Surujang', 'IT', '1')
+insert into @emp values('A22222', 'Rahmat Surahmat', 'IT', '2')
+insert into @emp values('A33333', 'Adang Suradang', 'IT', '1')
+insert into @emp values('A44444', 'Mansurudin', 'IT', '2')
+
+declare @dept table(
+	kode varchar(4),
+	desk varchar(100)
+)
+
+insert into @dept values('IT','Information Tech')
+insert into @dept values('ENG','Engineering')
+
+declare @pos table(
+	kode varchar(4),
+	desk varchar(100)
+)
+
+insert into @pos values('1','Dept. Head')
+insert into @pos values('2','Officer')
+
+
+declare @absen table (
+  row_id varchar(200),
+  nrp varchar(10),
+  time_absen datetime,
+  tipe varchar(1)
+)
+
+insert into @absen values('19007204-CE81-4D60-A107-B4CF4C90DE63','A11111','2022-08-01 06:14','1')
+insert into @absen values('FCA9B3C4-CBCB-4F8A-8A05-DCFDECB3C4D4','A11111','2022-08-01 18:34','0')
+insert into @absen values('DA2E540B-B0E7-41F1-9146-4F6F0675273F','A11111','2022-08-02 06:32','1')
+insert into @absen values('D64AD114-E835-4B6F-BFED-9A044F61AF0E','A11111','2022-08-02 18:27','0')
+insert into @absen values('6AE93C30-0B46-4E01-88A4-E82F0C2D1194','A11111','2022-08-03 06:19','1')
+insert into @absen values('DAE6B2E8-8FB2-442F-9496-4EAF9A707630','A11111','2022-08-03 18:30','0')
+insert into @absen values('E09DEBE2-B27D-4D04-9B3C-F7042889A637','A11111','2022-08-04 06:50','1')
+insert into @absen values('F1D63969-DD87-42C0-85E2-42CFA5840574','A11111','2022-08-04 18:13','0')
+insert into @absen values('6DF4A493-AED0-499C-BBB2-E1641B4B81F4','A11111','2022-08-05 06:45','1')
+insert into @absen values('12C3AC73-2E1C-45B2-856C-161723E3806A','A11111','2022-08-05 18:29','0')
+insert into @absen values('62C92BF7-781C-44AA-825F-991D293D381A','A11111','2022-08-06 06:10','1')
+insert into @absen values('64B6B84B-9430-4C8B-80C3-2C60BD3E7E65','A11111','2022-08-06 18:50','0')
+insert into @absen values('D13F7FBE-F04B-410D-85BD-317866E1FCFE','A11111','2022-08-07 06:28','1')
+insert into @absen values('C5381534-8150-42C4-989A-17DBFE2C390F','A11111','2022-08-07 18:19','0')
+insert into @absen values('2DE52AF6-D68D-4783-BDBF-A3988673C162','A11111','2022-08-08 06:28','1')
+insert into @absen values('0051283B-1425-480B-BF14-39E8EC60D495','A11111','2022-08-08 18:37','0')
+insert into @absen values('5A362DEC-CC7B-4FCC-9C72-883E38B54086','A22222','2022-08-01 18:29','1')
+insert into @absen values('1A15FE7F-9824-49D5-A584-4A78A9C4AB1A','A22222','2022-08-01 06:18','0')
+insert into @absen values('B07E103E-6DCF-4776-B666-9370AB908967','A22222','2022-08-02 18:38','1')
+insert into @absen values('66F34E15-D526-454F-B482-875B5BCCF307','A22222','2022-08-02 06:51','0')
+insert into @absen values('096C50C4-2E8E-46CD-B0B0-891A9A361505','A22222','2022-08-03 18:41','1')
+insert into @absen values('F0117184-C3C2-44EC-B376-7F38C03852B6','A22222','2022-08-03 06:43','0')
+insert into @absen values('150E1482-90C6-42E3-A79F-B995602A3E38','A22222','2022-08-04 18:34','1')
+insert into @absen values('B3FAD35C-9852-4D7D-8CFB-A45C8BC248EF','A22222','2022-08-04 06:24','0')
+insert into @absen values('DD0CD837-E69A-413E-8053-DFAB5B0E6E90','A22222','2022-08-05 18:34','1')
+insert into @absen values('B6FBBF16-E0FF-4E07-AA0E-5B5D844A4FCE','A22222','2022-08-05 06:12','0')
+insert into @absen values('D2CDAD78-F5C5-496B-9669-A6E65F59FF77','A33333','2022-08-01 07:14','1')
+insert into @absen values('073199DB-02BB-46DA-93D0-2B6A3E5230C5','A33333','2022-08-01 17:53','0')
+insert into @absen values('3FF85B31-E734-4E6F-990F-E368E75319B7','A33333','2022-08-02 07:32','1')
+insert into @absen values('E56993FE-7B46-4B8E-B332-B6F35F1362B6','A33333','2022-08-02 17:42','0')
+insert into @absen values('A7EC2135-59BF-4FF0-A063-4AA2A395347D','A33333','2022-08-03 07:54','1')
+insert into @absen values('39D53319-BF25-4951-ADAD-851E8F58FD4E','A33333','2022-08-03 17:12','0')
+insert into @absen values('C7AA7C99-A5F7-4217-8B60-201594BE5C45','A33333','2022-08-04 07:14','1')
+insert into @absen values('9952CBAD-C1B1-4CA3-BBB2-2AE26B2A6264','A33333','2022-08-04 17:54','0')
+insert into @absen values('DF0B4EBB-7473-4A8D-8ADD-1FC86FFB4B4C','A44444','2022-08-01 17:34','1')
+insert into @absen values('BB777F22-9D7B-4CCD-B282-30799C4A1947','A44444','2022-08-01 05:12','0')
+insert into @absen values('3F6E7101-F7E1-4E09-93FB-0599A2EF70CB','A44444','2022-08-02 17:45','1')
+insert into @absen values('3F7F2F79-FE01-4389-B56A-19FA68457596','A44444','2022-08-02 05:34','0')
+insert into @absen values('BEA77F03-01A2-4E4C-AE84-F9E0EB42A42D','A44444','2022-08-03 17:12','1')
+insert into @absen values('983BA93C-20E1-4F21-91C0-7F8D889355FD','A44444','2022-08-03 05:56','0')
+insert into @absen values('D39B8ABE-66F3-47D9-9CBA-893A68239E27','A44444','2022-08-04 17:12','1')
+insert into @absen values('A772A679-FF95-43A0-9EEE-1EB2E79DF70D','A44444','2022-08-04 05:13','0')
+insert into @absen values('A36AF48A-0B70-4476-A3DB-A8BB48ED6D78','A44444','2022-08-05 17:12','1')
+insert into @absen values('0FEC175A-2ED9-4279-B3A9-1ADB2D27F144','A44444','2022-08-05 05:45','0')
+insert into @absen values('702E96ED-1FF8-476D-AB4B-281E1DD29BAF','A44444','2022-08-06 17:12','1')
+insert into @absen values('0AF3F5AB-743C-44A3-B33F-8849877029CF','A44444','2022-08-06 05:34','0')
+insert into @absen values('BBD21B16-7B62-42A6-8BAC-87C4DE890A54','A44444','2022-08-07 17:12','1')
+insert into @absen values('A5F147C2-0794-40D7-A987-8859C1917435','A44444','2022-08-07 05:52','0')
+insert into @absen values('4F46959E-AFE0-4405-ACA3-59838625186A','A44444','2022-08-08 17:12','1')
+insert into @absen values('A3E96DBA-A7C5-4BA6-B629-21A05F5BB570','A44444','2022-08-08 05:12','0')
+
+
+select a.NRP, a.Nama, b.desk as Dept, c.desk as Pos
+from @emp a join @dept b on b.kode = a.Dept 
+join @pos c on c.kode = a.post
+
+SELECT
+  nrp,
+  MIN(time_absen) as DateIn,
+  MAX(time_absen) as DateOut,
+  CONCAT(DATEDIFF(HOUR, min(time_absen), max(time_absen)), ' hours') AS Duration
+FROM @absen
+GROUP BY nrp, CONVERT(date, time_absen)
+ORDER BY CONVERT(date, time_absen) ASC, nrp ASC
+
+select a.NRP, a.Nama, b.desk as Dept, c.desk as Pos,
+MIN(time_absen) as DateIn,
+MAX(time_absen) as DateOut,
+CONCAT(DATEDIFF(HOUR, min(time_absen), max(time_absen)), ' hours') AS Duration
+from @emp a join @dept b on b.kode = a.Dept 
+join @pos c on c.kode = a.post
+left join @absen d on d.nrp = a.NRP
+GROUP BY a.NRP, a.Nama, b.desk, c.desk, CONVERT(date, time_absen)
+ORDER BY CONVERT(date, time_absen) ASC, nrp ASC
+
+--select * from @emp
+--select * from @dept
+--select * from @pos
+--select * from @absen
+
+
