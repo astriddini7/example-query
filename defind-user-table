@@ -1,0 +1,6 @@
+SELECT DISTINCT o.name AS ObjectName, o.type_desc AS ObjectType
+FROM sys.sql_modules m
+INNER JOIN sys.objects o ON m.object_id = o.object_id
+WHERE m.definition LIKE '%TableTypeName%'
+AND (o.type_desc = 'SQL_STORED_PROCEDURE' OR o.type_desc = 'SQL_SCALAR_FUNCTION' OR o.type_desc = 'SQL_TABLE_VALUED_FUNCTION')
+ORDER BY o.type_desc;
