@@ -1,0 +1,45 @@
+/****** Create Table  ******/
+
+CREATE TABLE #TemporaryTable (
+    ID INT IDENTITY(1,1),
+	[Date] date,
+    [Url] NVARCHAR(50),
+    [Request] NVARCHAR(MAX),
+	[Response] NVARCHAR(MAX),
+);
+
+/****** Insert Data  ******/
+DECLARE @cnt INT = 0;
+
+WHILE @cnt < 100
+BEGIN
+   INSERT INTO #TemporaryTable
+           ([Date]
+           ,[Url]
+           ,[Request]
+           ,[Response])
+     VALUES
+           (GETDATE()
+           ,'/test'
+           ,N'
+		   [{"Name": "Astrid", "Address": "Cakung"},{"Kursi" : 1, "Lorong": 5}
+		   ]
+		   '  
+           ,N'[{"Name": "Astrid", "Address": "Cakung"},{"Kursi" : 1, "Lorong": 5}
+		   ]'  )
+   SET @cnt = @cnt + 1;
+END;
+
+/****** Select Data  ******/
+select * from #TemporaryTable
+
+/****** Select Data By JSON ******/
+SELECT  [ID]
+      ,[Date]
+      ,[Url]
+      ,[Request]
+      ,[Response]
+	  ,JSON_VALUE([Request], '$.info.type') as dataByValue, -- digunakan untuk select data spesifik value
+	  JSON_QUERY([Response], '$.info') as jsonByObject -- digunakan untuk select data spesifik object
+  FROM [AstridTest].[dbo].[Log] where ISJSON ([Request]) > 0 -- filter data format json string.
+
